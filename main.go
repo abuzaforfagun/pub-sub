@@ -8,6 +8,65 @@ import (
 )
 
 func main() {
+	directBrokerExample()
+}
+
+func topicBrokkerExample() {
+	topicBroker := brokers.NewTopicsBroker()
+	musicListener1, err := topicBroker.Subscribe("music", "1")
+	if err != nil {
+		fmt.Println(err)
+	}
+	musicListener2, err := topicBroker.Subscribe("music", "2")
+	if err != nil {
+		fmt.Println(err)
+	}
+	var wg sync.WaitGroup
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for msg := range musicListener1 {
+			defer wg.Done()
+			wg.Add(1)
+			fmt.Println("Listener 1: ", msg)
+		}
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for msg := range musicListener2 {
+			defer wg.Done()
+			wg.Add(1)
+			fmt.Println("Listener 2: ", msg)
+		}
+	}()
+
+	wg.Add(1)
+	go func() {
+		for {
+			select {
+			case <-topicBroker.SubscribeExitedChannel():
+				fmt.Println("channel exited")
+				wg.Done()
+				return
+			}
+		}
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		topicBroker.Publish("music", "Going to release new music")
+		topicBroker.Publish("music", "Released new music")
+		topicBroker.Close()
+	}()
+
+	wg.Wait()
+}
+
+func directBrokerExample() {
 	directBroker := brokers.NewDirectBroker()
 
 	musicListener, err := directBroker.Subscribe("music")
@@ -18,20 +77,27 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 	}
-
-	go func() {
-		for val := range musicListener {
-			fmt.Println(val)
-		}
-	}()
-
-	go func() {
-		for val := range sportListener {
-			fmt.Println(val)
-		}
-	}()
-
 	var wg sync.WaitGroup
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for val := range musicListener {
+			defer wg.Done()
+			wg.Add(1)
+			fmt.Println(val)
+		}
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for val := range sportListener {
+			defer wg.Done()
+			wg.Add(1)
+			fmt.Println(val)
+		}
+	}()
 
 	wg.Add(1)
 	go func() {
