@@ -5,21 +5,21 @@ import (
 	"sync"
 )
 
-type TopicBroker struct {
+type TopicBroker[T any] struct {
 	mu          sync.Mutex
-	subscribers map[string]map[string]chan string
+	subscribers map[string]map[string]chan T
 	closed      bool
 	exited      chan bool
 }
 
-func NewTopicsBroker() *TopicBroker {
-	return &TopicBroker{
-		subscribers: make(map[string]map[string]chan string),
+func NewTopicsBroker[T any]() *TopicBroker[T] {
+	return &TopicBroker[T]{
+		subscribers: make(map[string]map[string]chan T),
 		exited:      make(chan bool),
 	}
 }
 
-func (b *TopicBroker) Subscribe(queuName string, clientName string) (chan string, error) {
+func (b *TopicBroker[T]) Subscribe(queuName string, clientName string) (chan T, error) {
 	if b.closed {
 		return nil, errors.New("channel is already closed")
 	}
@@ -34,13 +34,13 @@ func (b *TopicBroker) Subscribe(queuName string, clientName string) (chan string
 			return nil, errors.New("client is already subscribed")
 		}
 	} else {
-		b.subscribers[queuName] = make(map[string]chan string)
+		b.subscribers[queuName] = make(map[string]chan T)
 	}
-	b.subscribers[queuName][clientName] = make(chan string)
+	b.subscribers[queuName][clientName] = make(chan T)
 	return b.subscribers[queuName][clientName], nil
 }
 
-func (b *TopicBroker) Publish(queuName string, message string) error {
+func (b *TopicBroker[T]) Publish(queuName string, message T) error {
 	if b.closed {
 		return errors.New("queue is already closed")
 	}
@@ -59,7 +59,7 @@ func (b *TopicBroker) Publish(queuName string, message string) error {
 	return nil
 }
 
-func (b *TopicBroker) Close() error {
+func (b *TopicBroker[T]) Close() error {
 	if b.closed {
 		return errors.New("channel is already closed")
 	}
@@ -75,6 +75,6 @@ func (b *TopicBroker) Close() error {
 	return nil
 }
 
-func (b *TopicBroker) SubscribeExitedChannel() chan bool {
+func (b *TopicBroker[T]) SubscribeExitedChannel() chan bool {
 	return b.exited
 }

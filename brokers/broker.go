@@ -1,8 +1,8 @@
 package brokers
 
-type Broker interface {
-	Publish(queuName string, message string) error
-	Subscribe(queuName string) (chan string, error)
+type Broker[T any] interface {
+	Publish(queuName string, message T) error
+	Subscribe(queuName string) (chan T, error)
 	SubscribeExitedChannel() chan bool
 	Close() error
 }
