@@ -8,11 +8,12 @@ import (
 )
 
 func main() {
-	directBrokerExample()
+	// directBrokerExample()
+	topicBrokkerExample()
 }
 
 func topicBrokkerExample() {
-	topicBroker := brokers.NewTopicsBroker()
+	topicBroker := brokers.NewTopicsBroker[string]()
 	musicListener1, err := topicBroker.Subscribe("music", "1")
 	if err != nil {
 		fmt.Println(err)
@@ -67,7 +68,7 @@ func topicBrokkerExample() {
 }
 
 func directBrokerExample() {
-	directBroker := brokers.NewDirectBroker()
+	directBroker := brokers.NewDirectBroker[string]()
 
 	musicListener, err := directBroker.Subscribe("music")
 	if err != nil {

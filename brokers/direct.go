@@ -5,21 +5,21 @@ import (
 	"sync"
 )
 
-type DirectBroker struct {
+type DirectBroker[T any] struct {
 	mu          sync.Mutex
-	subscribers map[string]chan string
+	subscribers map[string]chan T
 	closed      bool
 	exited      chan bool
 }
 
-func NewDirectBroker() Broker {
-	return &DirectBroker{
-		subscribers: make(map[string]chan string),
+func NewDirectBroker[T any]() Broker[T] {
+	return &DirectBroker[T]{
+		subscribers: make(map[string]chan T),
 		exited:      make(chan bool),
 	}
 }
 
-func (b *DirectBroker) Subscribe(queuName string) (chan string, error) {
+func (b *DirectBroker[T]) Subscribe(queuName string) (chan T, error) {
 	if b.closed {
 		return nil, errors.New("channel is already closed")
 	}
@@ -32,11 +32,11 @@ func (b *DirectBroker) Subscribe(queuName string) (chan string, error) {
 		return nil, errors.New("queue is already subscribed")
 	}
 
-	b.subscribers[queuName] = make(chan string)
+	b.subscribers[queuName] = make(chan T)
 	return b.subscribers[queuName], nil
 }
 
-func (b *DirectBroker) Publish(queuName string, message string) error {
+func (b *DirectBroker[T]) Publish(queuName string, message T) error {
 	if b.closed {
 		return errors.New("queue is already closed")
 	}
@@ -52,7 +52,7 @@ func (b *DirectBroker) Publish(queuName string, message string) error {
 	return nil
 }
 
-func (b *DirectBroker) Close() error {
+func (b *DirectBroker[T]) Close() error {
 	if b.closed {
 		return errors.New("channel is already closed")
 	}
@@ -66,6 +66,6 @@ func (b *DirectBroker) Close() error {
 	return nil
 }
 
-func (b *DirectBroker) SubscribeExitedChannel() chan bool {
+func (b *DirectBroker[T]) SubscribeExitedChannel() chan bool {
 	return b.exited
 }
